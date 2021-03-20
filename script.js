@@ -27,5 +27,4 @@ const displayMatches = function () {
 const searchInput = document.querySelector('.search');
 const suggestions = document.querySelector('.suggestions');
 
-searchInput.addEventListener('change', displayMatches);
-searchInput.addEventListener('keyup', displayMatches);
+searchInput.addEventListener('input', displayMatches);
