@@ -6,6 +6,21 @@ const endpoint =
 
 const cities = [];
 
+const debounce = (func, wait, immediate) => {
+  let timeout;
+
+  return function executedFunction(...args) {
+    const context = this;
+    const later = () => {
+      timeout = null;
+      if (!immediate) func.apply(context, args);
+    };
+
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
 const getJSON = async () => {
   const res = await fetch(endpoint);
   const data = await res.json();
@@ -20,36 +35,42 @@ const numberWithCommas = function (x) {
 
 const findMatches = function (wordToMatch, cities) {
   return cities.filter(place => {
-    // if the city or state matches what was searched
     const regex = new RegExp(wordToMatch, 'gi');
     return place.city.match(regex) || place.state.match(regex);
   });
 };
 
 const displayMatches = function () {
+  let html;
   const matchArray = findMatches(this.value, cities);
-  const html = matchArray
-    .map(place => {
-      const regex = new RegExp(this.value, 'gi');
-      const cityName = place.city.replace(
-        regex,
-        `<span class="hl">${this.value}</span>`
-      );
-      const stateName = place.state.replace(
-        regex,
-        `<span class="hl">${this.value}</span>`
-      );
-      return `
+  if (Array.isArray(matchArray) && !matchArray.length) {
+    html = `
+      <li>
+        <span class="name">No Results Found</span>
+      </li>
+    `;
+  } else {
+    html = matchArray
+      .map(place => {
+        const regex = new RegExp(this.value, 'gi');
+        const cityName = place.city.replace(
+          regex,
+          `<span class="hl">${this.value}</span>`
+        );
+        const stateName = place.state.replace(
+          regex,
+          `<span class="hl">${this.value}</span>`
+        );
+        return `
       <li>
         <span class="name">${cityName}, ${stateName}</span>
         <span class="population">${numberWithCommas(place.population)}</span>
       </li>
     `;
-    })
-    .join('');
-
+      })
+      .join('');
+  }
   suggestions.innerHTML = html;
 };
 
-searchInput.addEventListener('change', displayMatches);
-searchInput.addEventListener('keyup', displayMatches);
+searchInput.addEventListener('input', debounce(displayMatches, 300));
